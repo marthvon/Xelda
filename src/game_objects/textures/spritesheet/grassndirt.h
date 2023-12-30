@@ -1,0 +1,42 @@
+#ifndef GRASSnDIRT_SPRITESHEET_H
+#define GRASSnDIRT_SPRITESHEET_H
+
+#define GnD_MAX_COLUMN 8
+#define GnD_MAX_ROW 3
+
+#define GnD_PARTITION_X 16
+#define GnD_PARTITION_Y 16
+
+// X + Y*GnD_MAX_COLUMN
+typedef enum {
+    GD_G2D_UL = 0 + 0*GnD_MAX_COLUMN,
+    GD_G2D_U = 1 + 0*GnD_MAX_COLUMN,
+    GD_G2D_UR = 2 + 0*GnD_MAX_COLUMN,
+    GD_G2D_L = 0 + 1*GnD_MAX_COLUMN,
+    GD_DIRT0 = 1 + 1*GnD_MAX_COLUMN,
+    GD_G2D_R = 2 + 1*GnD_MAX_COLUMN,
+    GD_G2D_DL = 0 + 2*GnD_MAX_COLUMN,
+    GD_G2D_D = 1 + 2*GnD_MAX_COLUMN,
+    GD_G2D_DR = 2 + 2*GnD_MAX_COLUMN,
+
+    GD_GRASS1 = 3 + 0*GnD_MAX_COLUMN,
+    GD_GRASS2 = 3 + 1*GnD_MAX_COLUMN,
+    GD_GRASS3 = 3 + 2*GnD_MAX_COLUMN,
+
+    GD_G2W_UL = 4 + 0*GnD_MAX_COLUMN,
+    GD_G2W_U = 5 + 0*GnD_MAX_COLUMN,
+    GD_G2W_UR = 6 + 0*GnD_MAX_COLUMN,
+    GD_G2W_L = 4 + 1*GnD_MAX_COLUMN,
+    GD_WATER0 = 5 + 1*GnD_MAX_COLUMN,
+    GD_G2W_R = 6 + 1*GnD_MAX_COLUMN,
+    GD_G2W_DL = 4 + 2*GnD_MAX_COLUMN,
+    GD_G2W_D = 5 + 2*GnD_MAX_COLUMN,
+    GD_G2W_DR = 6 + 2*GnD_MAX_COLUMN,
+
+    GD_DIRT1 = 7 + 0*GnD_MAX_COLUMN,
+    GD_DIRT2 = 7 + 1*GnD_MAX_COLUMN,
+    GD_DIRT3 = 7 + 2*GnD_MAX_COLUMN,
+
+} GrassnDirtSpritesheetEnums;
+
+#endif

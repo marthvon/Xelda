@@ -1,0 +1,13 @@
+#ifndef COLLISION_TABLE_H
+#define COLLISION_TABLE_H
+
+typedef enum {
+    COLLISION_LAYER = 0b1,
+    HITBOX_LAYER = 0b10,
+    INTERACTION_LAYER = 0b100,
+    WARP_EVENT_LAYER = 0b1000
+} CollisionType;
+
+#define MAX_COLLISION_LAYER 4
+
+#endif

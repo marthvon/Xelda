@@ -1,0 +1,8 @@
+#include "linkedlist.h"
+#include <stddef.h>
+
+LINKED_LIST_TEMPLATE_DEF(void*,)
+LINKED_LIST_TEMPLATE_DEF(char,8t)
+LINKED_LIST_TEMPLATE_DEF(short,16t)
+LINKED_LIST_TEMPLATE_DEF(int,32t)
+LINKED_LIST_TEMPLATE_DEF(long,64t)

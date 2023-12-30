@@ -1,0 +1,15 @@
+#ifndef TEXTURE_TABLE_H
+#define TEXTURE_TABLE_H
+
+#include <stddef.h>
+
+typedef enum {
+    PLAYER_SPRITESHEET,
+    GRASSnDIRT_SPRITESHEET,
+    TREEnROCK_SPRITESHEET,
+    STATUE_SPRITE,
+    SPIDER_SPRITESHEET,
+    MAX_TEXTURE_COUNT
+} TextureEnums;
+
+#endif
