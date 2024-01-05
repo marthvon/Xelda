@@ -37,10 +37,10 @@ void DrawCanvas(Map* map) {
         WINDOW_WIDTH - map->window_offset.w,
         WINDOW_HEIGHT - map->window_offset.h
     };
-
+    
     Z_Index* end = map->z_index + map->z_index_count;
     for(Z_Index* itr = map->z_index; itr != end; ++itr)
-        if(itr->entity[0] != NULL)
+        if(itr->entity.val[0] != NULL)
             SDL_RenderCopy(Canvas, itr->cache_layer, NULL, &rect);
     SDL_RenderPresent(Canvas);
 }

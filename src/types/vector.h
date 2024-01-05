@@ -21,6 +21,7 @@ Vector##SUFFIX * init_vector##SUFFIX (Vector##SUFFIX * vector, const SIZE_TYPE c
     vector->capacity = capacity;                                                                \
     vector->size = 0;                                                                           \
     memset(res, 0, sizeof(TYPE)*capacity);                                                      \
+    return vector;                                                                              \
 }                                                                                               \
                                                                                                 \
 void push##SUFFIX (Vector##SUFFIX * vector, TYPE val) {                                         \
@@ -32,7 +33,7 @@ void push##SUFFIX (Vector##SUFFIX * vector, TYPE val) {                         
         vector->capacity *= 2;                                                                  \
     }                                                                                           \
     vector->val[vector->size] = val;                                                            \
-    vector->size++;                                                                                     \
+    vector->size++;                                                                             \
 }                                                                                               \
                                                                                                 \
 void reserve##SUFFIX (Vector##SUFFIX * vector, const SIZE_TYPE size) {                          \

@@ -31,7 +31,7 @@ void propagate_input(Map* map) {
 
 void update_texture_cache(Z_Index* z_index) {
     SetCacheLayer(z_index->cache_layer);
-    FOR_VECTOR(Entity*, z_index->entity,, 
+    FOR_VECTOR(struct Entity*, z_index->entity,, 
         UpdateCacheLayer(*itr);
     )
 }

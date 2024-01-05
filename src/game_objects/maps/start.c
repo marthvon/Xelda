@@ -31,7 +31,7 @@ struct Map* OnReadyStartMap() {
         map->z_index[i].cache_layer = CreateCacheLayer(400, 400);
     init_vector_ett(&map->z_index[0].entity, 645);
     init_vector_ett(&map->z_index[1].entity, 200);
-    init_vector_ett(&map->z_index[3].entity, 5);
+    init_vector_ett(&map->z_index[2].entity, 5);
     
     map->process_priority = calloc(2, sizeof(Entity*));
     map->process_count = 2;
