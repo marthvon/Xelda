@@ -12,6 +12,7 @@ typedef struct {
     float hp;
     float stamina;
     BOOL hasSword;
+    BOOL inventory;
     Point2f last_interaction;
     Point2S8 move_controller;
     float accum_anim;

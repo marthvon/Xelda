@@ -32,11 +32,13 @@ BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, cons
         if(!(collision_flag & 0b1))
             continue;
         CollisionMap* colmap = &map->collision_map[i];
+        // divide and floor to nearest integer value
         Point2U16 grid_pos = {
             (position[0] / colmap->partitions[0]),
             position[1] / colmap->partitions[1]
         };
         
+        // decrement if fract is less than or equal to 0.5 and increment if fract is greater than or equal 0.5 
         if(vector[0] == -1) {
             if(XF_LESS_THAN_OR_EQUAL_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]/2))
                 --grid_pos[0];
@@ -52,6 +54,7 @@ BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, cons
         } else 
             return TRUE;
         
+        // return collision true when out of bounds of map
         if(
             !X2_INBETWEEN_X1_X3(-1, grid_pos[0], colmap->dimensions[0]) || 
             !X2_INBETWEEN_X1_X3(-1, grid_pos[1], colmap->dimensions[1]) || 
@@ -59,6 +62,7 @@ BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, cons
         ) 
             return TRUE;
 
+        // start checking if collision exist in grid and adjacent grids perpendicular of vector 
         if(vector[0] != 0) {
             if(XF_LESS_THAN_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]/2)) { 
                 if(colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1]-1)])

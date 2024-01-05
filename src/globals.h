@@ -1,8 +1,6 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#define THROWABLE(X) if(!(X)) return FALSE;
-
 typedef unsigned char Byte;
 typedef char Int8;
 
@@ -38,5 +36,6 @@ typedef float Rect2f[4];
 
 #define IF_TRUE_SET_FALSE(condition, extension) if(condition) { condition = FALSE; extension }
 #define X2_INBETWEEN_X1_X3(x1, x2, x3) ((x1) < (x2) && (x2) < (x3))
+#define X2F_INBETWEEN_X1F_X3F(x1, x2, x3) (XF_LESS_THAN_YF(x1, x2) && XF_LESS_THAN_YF(x2, x3))
 
 #endif

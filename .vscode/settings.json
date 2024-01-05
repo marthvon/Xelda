@@ -6,6 +6,7 @@
         "utility": "cpp",
         "new": "cpp",
         "typeinfo": "cpp",
-        "initializer_list": "cpp"
+        "initializer_list": "cpp",
+        "treenrock.h": "c"
     }
 }

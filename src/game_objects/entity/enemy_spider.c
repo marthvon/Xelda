@@ -8,9 +8,9 @@
 #define SPIDER_MAX_HP 50
 #define SPIDER_ATTACK_DAMAGE 25
 
-#define ATTACK_ANIM1_DELAY 0.166666
-#define ATTACK_ANIM2_DELAY 0.066666
-#define ATTACK_ANIM3_DELAY 0.183333
+#define SPIDER_ATTACK_ANIM1_DELAY 0.166666
+#define SPIDER_ATTACK_ANIM2_DELAY 0.066666
+#define SPIDER_ATTACK_ANIM3_DELAY 0.183333
 
 void set_animation_es(Entity* entity, SpiderSpritesheetEnums start_state, void(*anim_proc)(Entity*, const float)) {
     Spider* instance = entity->instance;
@@ -39,7 +39,7 @@ void es_anim_attack_front(Entity* entity, const float delta) {
     Spider* instance = entity->instance;
     switch(instance->state/SPIDER_MAX_COLUMN) {
         case 0:
-            WAIT(instance->accum_anim, ATTACK_ANIM1_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM1_DELAY);
             instance->state += SPIDER_MAX_COLUMN;
             if(instance->state%SPIDER_MAX_COLUMN) { // back
                 set_extent(entity, 8, 24, 8, 8);
@@ -50,7 +50,7 @@ void es_anim_attack_front(Entity* entity, const float delta) {
             }
             break;
         case 1:
-            WAIT(instance->accum_anim, ATTACK_ANIM2_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM2_DELAY);
             instance->state += SPIDER_MAX_COLUMN*2;
             set_extent(entity, 8, 8, 8, 8);
             if(instance->state%SPIDER_MAX_COLUMN) // back
@@ -59,7 +59,7 @@ void es_anim_attack_front(Entity* entity, const float delta) {
                 null_collision_on(entity->map, HITBOX_LAYER, entity->position[0], entity->position[1]-(SPIDER_PARTITION_Y/2));
             break;
         case 3:
-            WAIT(instance->accum_anim, ATTACK_ANIM3_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM3_DELAY);
             set_animation_es(entity, instance->state%SPIDER_MAX_COLUMN? ESBACKIDLE0 : ESFRONTIDLE0, es_anim_idle);
         default:
             return;
@@ -71,7 +71,7 @@ void es_anim_attack_side(Entity* entity, const float delta) {
     Spider* instance = entity->instance;
     switch(instance->state%SPIDER_MAX_COLUMN) {
         case 0:
-            WAIT(instance->accum_anim, ATTACK_ANIM1_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM1_DELAY);
             instance->state++;
             if(entity->flip) { // left
                 set_extent(entity, 24, 8, 8, 8);
@@ -82,7 +82,7 @@ void es_anim_attack_side(Entity* entity, const float delta) {
             }
             break;
         case 1:
-            WAIT(instance->accum_anim, ATTACK_ANIM1_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM1_DELAY);
             instance->state++;
             set_extent(entity, 8, 8, 8, 8);
             if(entity->flip)  // left
@@ -91,7 +91,7 @@ void es_anim_attack_side(Entity* entity, const float delta) {
                 null_collision_on(entity->map, HITBOX_LAYER, entity->position[0]+(SPIDER_PARTITION_X/2), entity->position[1]);
             break;
         case 3:
-            WAIT(instance->accum_anim, ATTACK_ANIM1_DELAY);
+            WAIT(instance->accum_anim, SPIDER_ATTACK_ANIM1_DELAY);
             set_animation_es(entity, (instance->state/SPIDER_MAX_COLUMN)%4? ESBACKIDLE0 : ESFRONTIDLE0, es_anim_idle);
         default:
             return;
@@ -150,7 +150,7 @@ void ProcessSpider(Entity* entity, const float delta) {
     unsigned short damage = get_collision_on(entity->map, HITBOX_LAYER, entity->position);
     if(damage) {
         null_collision_on(entity->map, HITBOX_LAYER, entity->position[0], entity->position[1]);
-        instance->anim_proc(entity, ATTACK_ANIM1_DELAY + ATTACK_ANIM2_DELAY); // removes hitbox on hitbox layer if attacking
+        instance->anim_proc(entity, SPIDER_ATTACK_ANIM1_DELAY + SPIDER_ATTACK_ANIM2_DELAY); // removes hitbox on hitbox layer if attacking
         if(instance->hp <= damage) {
             instance->state = ESDEATH;
             entity->redraw = TRUE;
