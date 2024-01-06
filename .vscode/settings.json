@@ -7,6 +7,15 @@
         "new": "cpp",
         "typeinfo": "cpp",
         "initializer_list": "cpp",
-        "treenrock.h": "c"
+        "treenrock.h": "c",
+        "map_loader.h": "c",
+        "entity.h": "c",
+        "stdlib.h": "c",
+        "stddef.h": "c",
+        "visual_server.h": "c",
+        "filesystem.h": "c",
+        "map_table.h": "c",
+        "start.h": "c",
+        "globals.h": "c"
     }
 }

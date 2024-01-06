@@ -34,16 +34,20 @@
 #define PLAYER_DASH_LEFT_CASES case PFRONTDASHFACINGLEFT0: case PFRONTDASHFACINGLEFT1: case PBACKDASHFACINGLEFT0: case PBACKDASHFACINGLEFT1: \
                                 case PRIGHTDASHFACINGLEFT0: case PRIGHTDASHFACINGLEFT1: case PLEFTDASHFACINGLEFT0: case PLEFTDASHFACINGLEFT1
 
+#define PLAYER_FRONTDASH_CASES case PFRONTDASHFACINGBACK1: case PFRONTDASHFACINGFRONT1: case PFRONTDASHFACINGLEFT1: case PFRONTDASHFACINGRIGHT1
+#define PLAYER_BACKDASH_CASES case PBACKDASHFACINGBACK1: case PBACKDASHFACINGFRONT1: case PBACKDASHFACINGLEFT1: case PBACKDASHFACINGRIGHT1
+#define PLAYER_RIGHTDASH_CASES case PRIGHTDASHFACINGBACK1: case PRIGHTDASHFACINGFRONT1: case PRIGHTDASHFACINGLEFT1: case PRIGHTDASHFACINGRIGHT1
+#define PLAYER_LEFTDASH_CASES case PLEFTDASHFACINGBACK1: case PLEFTDASHFACINGFRONT1: case PLEFTDASHFACINGLEFT1: case PLEFTDASHFACINGRIGHT1
 
 #define PLAYER_ACTIVE_FRONT_CASES case PFRONTIDLE0: case PFRONTIDLE1: case PFRONTIDLE2: PLAYER_FRONT_WALK_CASES
 #define PLAYER_ACTIVE_BACK_CASES case PBACKIDLE0: case PBACKIDLE1: case PBACKIDLE2: PLAYER_BACK_WALK_CASES
 #define PLAYER_ACTIVE_LEFT_CASES case PLEFTIDLE0: case PLEFTIDLE1: PLAYER_LEFT_WALK_CASES
 #define PLAYER_ACTIVE_RIGHT_CASES case PRIGHTIDLE0: case PRIGHTIDLE1: PLAYER_RIGHT_WALK_CASES
 
-#define PLAYER_FRONT_CASES PLAYER_ACTIVE_FRONT_CASES: PLAYER_DASH_FRONT_CASES
-#define PLAYER_BACK_CASES PLAYER_ACTIVE_BACK_CASES: PLAYER_DASH_BACK_CASES
-#define PLAYER_LEFT_CASES PLAYER_ACTIVE_LEFT_CASES: PLAYER_DASH_LEFT_CASES
-#define PLAYER_RIGHT_CASES PLAYER_ACTIVE_RIGHT_CASES: PLAYER_DASH_RIGHT_CASES
+#define PLAYER_FRONT_CASES PLAYER_ACTIVE_FRONT_CASES: PLAYER_DASH_FRONT_CASES: case PFIREARROWFRONT: case PPLANTFRONT
+#define PLAYER_BACK_CASES PLAYER_ACTIVE_BACK_CASES: PLAYER_DASH_BACK_CASES: case PFIREARROWBACK: case PPLANTBACK
+#define PLAYER_LEFT_CASES PLAYER_ACTIVE_LEFT_CASES: PLAYER_DASH_LEFT_CASES: case PFIREARROWLEFT: case PPLANTLEFT
+#define PLAYER_RIGHT_CASES PLAYER_ACTIVE_RIGHT_CASES: PLAYER_DASH_RIGHT_CASES: case PFIREARROWRIGHT: case PPLANTRIGHT
 
 #define PLAYER_ALL_ACTIVE_CASES PLAYER_ACTIVE_FRONT_CASES: PLAYER_ACTIVE_BACK_CASES: PLAYER_ACTIVE_LEFT_CASES: PLAYER_ACTIVE_RIGHT_CASES
 
@@ -329,26 +333,36 @@ void player_plant(Entity* entity, const float delta) {
 void move_and_collide(Entity* entity, const float delta) {
     Player* instance = entity->instance;
     remove_collision_on(entity->map, COLLISION_LAYER, entity->position);
+    Point2f next_pos;
     if(!check_collision_with_vec(entity->map, COLLISION_LAYER, entity->position, instance->move_controller)) {
-        switch (instance->state) {
-            PLAYER_FRONT_WALK_CASES:
-                entity->position[1] += WALKING_SPEED;
-                entity->redraw = TRUE;
-            break;
-            PLAYER_BACK_WALK_CASES:
-                entity->position[1] -= WALKING_SPEED;
-                entity->redraw = TRUE;
-            break;
-            PLAYER_LEFT_WALK_CASES:
-                entity->position[0] -= WALKING_SPEED;
-                entity->redraw = TRUE;
-            break;
-            PLAYER_RIGHT_WALK_CASES:
-                entity->position[0] += WALKING_SPEED;
-                entity->redraw = TRUE;
-            break;
-            default:
-        }
+    switch (instance->state) {
+        PLAYER_FRONT_WALK_CASES: {
+            entity->position[1] += WALKING_SPEED;
+        } break;
+        PLAYER_BACK_WALK_CASES: {
+            entity->position[1] -= WALKING_SPEED;
+        } break;
+        PLAYER_LEFT_WALK_CASES: {
+            entity->position[0] -= WALKING_SPEED;
+        } break;
+        PLAYER_RIGHT_WALK_CASES: {
+            entity->position[0] += WALKING_SPEED;
+        } break;
+        case PLAYER_FRONTDASH_CASES: {
+
+        } break;
+        case PLAYER_BACKDASH_CASES: {
+             
+        } break;
+        case PLAYER_RIGHTDASH_CASES: {
+
+        } break;
+        case PLAYER_LEFTDASH_CASES: {
+
+        } break;
+        default:
+    }
+    entity->redraw = TRUE;
     }
     add_collision_on(entity->map, COLLISION_LAYER, entity->position);
 }
@@ -437,7 +451,8 @@ void InputPlayer(Entity* entity) {
         memcpy(instance->last_interaction, position, sizeof(Point2f));
     }
 
-    if(!move_input(instance))
+    const BOOL isDash = isHeld(GetStateOfKey(SDL_SCANCODE_LSHIFT));
+    if(!move_input(instance) && !isDash) // return when move_input is not changed
         return;
     if(instance->move_controller[0] == 0 && instance->move_controller[1] == 0) {
         set_animation_p(entity, 
@@ -446,7 +461,7 @@ void InputPlayer(Entity* entity) {
         );
         return;
     }
-    if(isHeld(GetStateOfKey(SDL_SCANCODE_LSHIFT))) { // dash
+    if(isDash) {
         unsigned short new_state = (instance->move_controller[0]? 
             (40 + ((instance->move_controller[1] & 0b10)>>1)) : (50 + ((instance->move_controller[0]+2)>>1)));
         switch(instance->state) {

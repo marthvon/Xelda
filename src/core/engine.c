@@ -9,6 +9,7 @@
 #include "../globals.h"
 #include "visual_server.h"
 #include "input_handler.h"
+#include "filesystem.h"
 #include "timer.h"
 #include "global_store.h"
 #include "../components/map.h"
@@ -64,6 +65,11 @@ void InitProgram() {
         fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError()),
         SDL_DestroyWindow(HWind),
 
+    INITIALIZE(
+        InitFilesystemVirtualCollection(),
+        fprintf(stderr, "Core virtual collection asset \"FVC\" file is missing...\n"),
+        TerminateFilesystemVirtualCollection(),
+
     CHECK(FileSystemAssetsScan(),
 
     INITIALIZE(
@@ -86,5 +92,5 @@ void InitProgram() {
         InitTimer();
         time_t generator;
         srand((unsigned) time(&generator))
-    )))))));
+    ))))))));
 }
