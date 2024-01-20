@@ -6,6 +6,10 @@
 #include "player.h"
 #include "statue.h"
 #include "enemy_spider.h"
+#include "treasure.h"
+#include "arrow_entity.h"
+#include "bomb_entity.h"
+#include "door_entity.h"
 
 Entity* ready_m(EntityInstance type, const float position_x, const float position_y, TextureEnums sprite, unsigned int spritesheet_ref, Map* created_by) {
     switch(type) {
@@ -17,6 +21,14 @@ Entity* ready_m(EntityInstance type, const float position_x, const float positio
             return ReadyStatue(position_x, position_y, created_by); 
         case ENEMY_SPIDER_ENTITY:
             return ReadySpider(position_x, position_y, created_by);
+        case TREASURE_ENTITY:
+            return ReadyTreasure(position_x, position_y, created_by);
+        case ARROW_ENTITIY:
+            return ReadyArrow(position_x, position_y, created_by);
+        case BOMB_ENTITY:
+            return ReadyBomb(position_x, position_y, created_by);
+        case DOOR_ENTITY:
+            return ReadyDoor(position_x, position_y, created_by);
     }
     return NULL;
 }
@@ -37,6 +49,18 @@ void process(Entity* entity, const float delta) {
             break; 
         case ENEMY_SPIDER_ENTITY:
             ProcessSpider(entity, delta);
+            break;
+        case TREASURE_ENTITY:
+            ProcessTreasure(entity);
+            break;
+        case ARROW_ENTITIY:
+            ProcessArrow(entity, delta);
+            break;
+        case BOMB_ENTITY:
+            ProcessBomb(entity, delta);
+            break;
+        case DOOR_ENTITY:
+            ProcessDoor(entity);
             break;
     }
 }
@@ -63,6 +87,18 @@ void terminate(Entity* entity) {
             break;
         case ENEMY_SPIDER_ENTITY:
             ExitSpider(entity);
+            break;
+        case TREASURE_ENTITY:
+            ExitTreasure(entity);
+            break;
+        case ARROW_ENTITIY:
+            ExitArrow(entity);
+            break;
+        case BOMB_ENTITY:
+            ExitBomb(entity);
+            break;
+        case DOOR_ENTITY:
+            ExitDoor(entity);
             break;
     }
     if(entity->instance != NULL)

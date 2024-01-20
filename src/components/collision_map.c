@@ -27,7 +27,7 @@ BOOL check_collision_on(Map* map, unsigned int collision_flag, const Point2f pos
     return FALSE;
 }
 
-BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, const Point2f position, const Point2S8 vector) {
+BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, Point2f position, const Point2S8 vector) {
     for(int i = 0; i < MAX_COLLISION_LAYER; ++i, collision_flag >>= 1) {
         if(!(collision_flag & 0b1))
             continue;
@@ -40,44 +40,53 @@ BOOL check_collision_with_vec(struct Map* map, unsigned int collision_flag, cons
         
         // decrement if fract is less than or equal to 0.5 and increment if fract is greater than or equal 0.5 
         if(vector[0] == -1) {
-            if(XF_LESS_THAN_OR_EQUAL_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]/2))
+            if(XF_LESS_THAN_OR_EQUAL_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]>>1))
                 --grid_pos[0];
         } else if (vector[0] == 1) {
-            if(XF_GREATER_THAN_OR_EQUAL_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]/2))
+            if(XF_GREATER_THAN_OR_EQUAL_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]>>1))
                 ++grid_pos[0];
         } else if (vector[1] == -1) {
-            if(XF_LESS_THAN_OR_EQUAL_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]/2))
+            if(XF_LESS_THAN_OR_EQUAL_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]>>1))
                 --grid_pos[1];
         } else if(vector[1] == 1) {
-            if(XF_GREATER_THAN_OR_EQUAL_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]/2))
+            if(XF_GREATER_THAN_OR_EQUAL_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]>>1))
                 ++grid_pos[1];
         } else 
             return TRUE;
         
         // return collision true when out of bounds of map
         if(
-            !X2_INBETWEEN_X1_X3(-1, grid_pos[0], colmap->dimensions[0]) || 
-            !X2_INBETWEEN_X1_X3(-1, grid_pos[1], colmap->dimensions[1]) || 
-            colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1])]
-        ) 
-            return TRUE;
-
+            !X2_INBETWEEN_X1_X3(-1, grid_pos[0], colmap->dimensions[0]) || // check if x axis is outside world map
+            !X2_INBETWEEN_X1_X3(-1, grid_pos[1], colmap->dimensions[1]) || // check if y axis is outside world map
+            colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1])] // check if next position is colliding
+        ) goto case_collided_adjust_position_to_free_space_then_ret_true;
         // start checking if collision exist in grid and adjacent grids perpendicular of vector 
         if(vector[0] != 0) {
-            if(XF_LESS_THAN_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]/2)) { 
-                if(colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1]-1)])
-                    return TRUE;
-            } else if(XF_GREATER_THAN_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]/2))
-                if(colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1]+1)])
-                    return TRUE;
+            if(XF_LESS_THAN_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]>>1)) { // check if above 
+                if(colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1]-1)]) // check adjacent grid above in the direction of vector
+                    goto case_collided_adjust_position_to_free_space_then_ret_true;
+            } else if(XF_GREATER_THAN_YF(position[1]-grid_pos[1]*colmap->partitions[1], colmap->partitions[1]>>1)) // check if below
+                if(colmap->grid[INDEX_2D(grid_pos[0], grid_pos[1]+1)]) // check adjacent grid below in the direction of vector
+                    goto case_collided_adjust_position_to_free_space_then_ret_true;
         } else {
-            if(XF_LESS_THAN_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]/2)) {
+            if(XF_LESS_THAN_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]>>1)) {
                 if(colmap->grid[INDEX_2D(grid_pos[0]-1, grid_pos[1])])
-                    return TRUE;
-            } else if(XF_GREATER_THAN_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]/2))
+                    goto case_collided_adjust_position_to_free_space_then_ret_true;
+            } else if(XF_GREATER_THAN_YF(position[0]-grid_pos[0]*colmap->partitions[0], colmap->partitions[0]>>1))
                 if(colmap->grid[INDEX_2D(grid_pos[0]+1, grid_pos[1])])
-                    return TRUE;
+                    goto case_collided_adjust_position_to_free_space_then_ret_true;
         }
+        continue;
+        case_collided_adjust_position_to_free_space_then_ret_true:
+        if(vector[1] == 0)
+            position[0] = (0.5 + ((int)position[0] / colmap->partitions[0])) * colmap->partitions[0];
+        else
+            position[1] = (0.5 + ((int)position[1] / colmap->partitions[1])) * colmap->partitions[1];
+        while(check_collision_on(map, collision_flag, position)) {
+            position[0] += vector[0] * colmap->partitions[0];
+            position[1] += vector[1] * colmap->partitions[1];
+        }
+        return TRUE;
     }
     return FALSE;
 }
@@ -148,6 +157,11 @@ void null_collision_on(struct Map* map, unsigned int collision_flag, const unsig
 BOOL check_collision_on_coord(struct Map* map, unsigned int collision_flag, const unsigned short x, const unsigned short y) {
     Point2f temp = {x, y};
     return check_collision_on(map, collision_flag, temp);
+}
+
+BOOL check_collision_with_vec_coord(struct Map* map, unsigned int collision_flag, Point2f position, const short vec_x, const short vec_y) {
+    Point2S8 temp = {vec_x, vec_y};
+    return check_collision_with_vec(map, collision_flag, position, temp);
 }
 
 void add_collision_on_coord(struct Map* map, unsigned int collision_flag, const unsigned short x, const unsigned short y) {

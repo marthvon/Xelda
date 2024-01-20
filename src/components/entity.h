@@ -7,6 +7,7 @@
 #include "../globals.h"
 #include "map.h"
 #include "../game_objects/entity/entity_table.h"
+#include "../game_objects/maps/map_table.h"
 #include "../game_objects/textures/texture_table.h"
 
 // forward declaration
@@ -32,6 +33,7 @@ typedef struct Entity {
     SDL_RendererFlip flip;
     struct Map* map;
     BOOL redraw;
+    MapInstance prev_map;
 } Entity;
 
 Entity* ready(EntityInstance type, const float position_x, const float position_y, struct Map* created_by);

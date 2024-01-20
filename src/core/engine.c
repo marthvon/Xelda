@@ -11,13 +11,14 @@
 #include "input_handler.h"
 #include "filesystem.h"
 #include "timer.h"
+#include "logger.h"
 #include "global_store.h"
 #include "../components/map.h"
 #include "../components/entity.h"
 
 #define INITIALIZE(condition, error, cleanup, extension) if(condition) {extension; cleanup;} else error
 #define INITIALIZE_NOEXCEPT(statement, cleanup, extension) statement; extension; cleanup
-#define FINISH_SETUP(additional) additional; StartLoop()
+#define FINISH_SETUP(additional) additional StartLoop()
 #define CHECK(condition, extension) if(condition) {extension;}
 
 static SDL_Window* HWind;
@@ -29,6 +30,7 @@ void StartLoop() {
         while(SDL_PollEvent(&evt) != 0) {
             switch (evt.type) {
                 case SDL_QUIT:
+                    system("clear");
                     return;
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
@@ -43,18 +45,17 @@ void StartLoop() {
 
         const Map* const prior_map = MainMap;
         if((MainMap = propagate_process(MainMap, GetDeltaTime())) != prior_map) {
-            ResetTimer(); // reset timer on map change/switch
             UpdateInputState();
+            ResetTimer(); // reset timer on map change/switch
             continue;
         }
         UpdateInputState();
         propagate_draw(MainMap);
+        DisplayConsole();
     }
 }
 
-void InitProgram() {
-    system("clear");
-
+void InitProgram(int map_id) {
     INITIALIZE(
         SDL_Init(SDL_INIT_VIDEO) == 0,
         fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError()),
@@ -76,21 +77,23 @@ void InitProgram() {
         InitVisualServer(HWind),
         fprintf(stderr, "SDL_CreateRenderer Error: %s\n", SDL_GetError()),
         TerminateVisualServer(),
-    
+
     INITIALIZE_NOEXCEPT(
         InitStore(),
         TerminateStore(),
 
+        InitConsole();
         InitInput();
 
     INITIALIZE(
-        (MainMap = on_ready_start()),
+        (MainMap = on_ready(map_id)),
         fprintf(stderr, "Failed to load Map: START_MAP\n"),
         propagate_exit(MainMap),
 
     FINISH_SETUP(
         InitTimer();
         time_t generator;
-        srand((unsigned) time(&generator))
+        srand((unsigned) time(&generator));
+        DisplayConsole();
     ))))))));
 }

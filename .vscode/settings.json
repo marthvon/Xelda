@@ -16,6 +16,16 @@
         "filesystem.h": "c",
         "map_table.h": "c",
         "start.h": "c",
-        "globals.h": "c"
+        "globals.h": "c",
+        "map.h": "c",
+        "collision_map.h": "c",
+        "spider.h": "c",
+        "player.h": "c",
+        "item_node.h": "c",
+        "treasure.h": "c",
+        "entity_table.h": "c",
+        "statue.h": "c",
+        "string.h": "c",
+        "logger.h": "c"
     }
 }

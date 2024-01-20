@@ -4,7 +4,7 @@
 
 #define LINKED_LIST_TEMPLATE(TYPE, SUFFIX)                                                                                          \
 typedef struct ListNode##SUFFIX {                                                                                                   \
-    TYPE* val;                                                                                                                      \
+    TYPE val;                                                                                                                      \
     struct ListNode##SUFFIX * prev;                                                                                                 \
     struct ListNode##SUFFIX * next;                                                                                                 \
 } ListNode##SUFFIX ;                                                                                                                \
@@ -19,8 +19,9 @@ ListNode##SUFFIX * create_list_node##SUFFIX##_n (ListNode##SUFFIX* node, TYPE va
 ListNode##SUFFIX * create_list_node##SUFFIX##_p (ListNode##SUFFIX* node, ListNode##SUFFIX* prev, TYPE val);                         \
 ListNode##SUFFIX * create_list_node##SUFFIX##_pn (ListNode##SUFFIX* node, ListNode##SUFFIX* prev, TYPE val, ListNode##SUFFIX* next);\
                                                                                                                                     \
-LinkedList##SUFFIX* create_linked_list##SUFFIX (LinkedList##SUFFIX * list);                                                         \
+LinkedList##SUFFIX* init_linked_list##SUFFIX (LinkedList##SUFFIX * list);                                                           \
 void free_linked_list##SUFFIX (LinkedList##SUFFIX * list);                                                                          \
+void free_ptr_val_linked_list##SUFFIX (LinkedList##SUFFIX * list);                                                                          \
 void push_back##SUFFIX (LinkedList##SUFFIX * list, TYPE val);                                                                       \
 void push_front##SUFFIX (LinkedList##SUFFIX * list, TYPE val);                                                                      \
 TYPE pop_back##SUFFIX (LinkedList##SUFFIX * list);                                                                                  \
@@ -58,7 +59,7 @@ ListNode##SUFFIX * create_list_node##SUFFIX##_pn (ListNode##SUFFIX * node, ListN
     return node;                                                                                                                        \
 }                                                                                                                                       \
                                                                                                                                         \
-LinkedList##SUFFIX * create_linked_list##SUFFIX (LinkedList##SUFFIX * list) {                                                           \
+LinkedList##SUFFIX * init_linked_list##SUFFIX (LinkedList##SUFFIX * list) {                                                             \
     list->root = NULL;                                                                                                                  \
     list->tail = NULL;                                                                                                                  \
     return list;                                                                                                                        \
@@ -76,6 +77,7 @@ void push_back##SUFFIX (LinkedList##SUFFIX * list, TYPE val) {                  
     if(list->tail == NULL) {                                                                                                            \
         list->tail = create_list_node##SUFFIX (malloc(sizeof(ListNode##SUFFIX)), val);                                                  \
         list->root = list->tail;                                                                                                        \
+        return;                                                                                                                         \
     }                                                                                                                                   \
     list->tail->next = create_list_node##SUFFIX##_p (malloc(sizeof(ListNode##SUFFIX)), list->tail, val);                                \
     list->tail = list->tail->next;                                                                                                      \
@@ -85,6 +87,7 @@ void push_front##SUFFIX (LinkedList##SUFFIX * list, TYPE val) {                 
     if(list->root == NULL) {                                                                                                            \
         list->root = create_list_node##SUFFIX (malloc(sizeof(ListNode##SUFFIX)), val);                                                  \
         list->tail = list->root;                                                                                                        \
+        return;                                                                                                                         \
     }                                                                                                                                   \
     list->root->prev = create_list_node##SUFFIX##_n (malloc(sizeof(ListNode##SUFFIX)), val, list->root);                                \
     list->root = list->root->prev;                                                                                                      \

@@ -27,9 +27,9 @@ Vector##SUFFIX * init_vector##SUFFIX (Vector##SUFFIX * vector, const SIZE_TYPE c
 void push##SUFFIX (Vector##SUFFIX * vector, TYPE val) {                                         \
     if(vector->size == vector->capacity) {                                                      \
         TYPE* temp = malloc(sizeof(TYPE)*vector->capacity*2);                                   \
-        memcpy(temp, vector.val, sizeof(TYPE)*vector->capacity);                                \
+        memcpy(temp, vector->val, sizeof(TYPE)*vector->capacity);                               \
         memset(temp+vector->capacity, 0, sizeof(TYPE)*vector->capacity);                        \
-        free(vector->val)                                                                       \
+        free(vector->val);                                                                      \
         vector->val = temp;                                                                     \
         vector->capacity *= 2;                                                                  \
     }                                                                                           \

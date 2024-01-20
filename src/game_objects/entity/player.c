@@ -3,22 +3,28 @@
 
 #include "../../core/input_handler.h"
 #include "../../core/visual_server.h"
+#include "../../core/logger.h"
 #include "../../components/collision_map.h"
 #include "collision_table.h"
 
-#define WALKING_SPEED 1.142857
-#define DASH_SPEED 3.2
+#define WALKING_SPEED 68.571428
+#define DASH_SPEED 720
+//548.571428
+
 #define PLAYER_MAX_HP 100
+#define HP_BLOCK 10
 #define PLAYER_MAX_STAMINA 100
+#define STAMINA_BLOCK 10
+#define STAMINA_RECOVERY_RATE 40
 #define PLAYER_ATTACK_DAMAGE 10
 
 #define PLAYER_ATTACK_ANIM1_DELAY 0.133333
 #define PLAYER_ATTACK_ANIM2_DELAY 0.083333
 #define PLAYER_ATTACK_ANIM3_DELAY 0.116666
 
-#define PLAYER_DASH_STARTUP_DELAY 0.03333
-#define PLAYER_DASH_ACTIVE_DELAY 0.083333
-#define PLAYER_DASH_RECOVERY_DELAY 0.05
+#define PLAYER_DASH_STARTUP_DELAY 0.033333
+#define PLAYER_DASH_ACTIVE_DELAY 0.133333
+#define PLAYER_DASH_RECOVERY_DELAY 0.066666
 
 #define PLAYER_FRONT_WALK_CASES case PFRONTWALK0: case PFRONTWALK1: case PFRONTWALK2
 #define PLAYER_BACK_WALK_CASES case PBACKWALK0: case PBACKWALK1: case PBACKWALK2
@@ -50,6 +56,27 @@
 #define PLAYER_RIGHT_CASES PLAYER_ACTIVE_RIGHT_CASES: PLAYER_DASH_RIGHT_CASES: case PFIREARROWRIGHT: case PPLANTRIGHT
 
 #define PLAYER_ALL_ACTIVE_CASES PLAYER_ACTIVE_FRONT_CASES: PLAYER_ACTIVE_BACK_CASES: PLAYER_ACTIVE_LEFT_CASES: PLAYER_ACTIVE_RIGHT_CASES
+
+
+LINKED_LIST_TEMPLATE_DEF(ItemNode,Item);
+
+/* BOUNDARY VALUE(MAX, MIN) SETTER START */
+void incr_hp(Player* player, const float health) {
+    player->hp += health;
+    if(XF_GREATER_THAN_YF(player->hp, (float)PLAYER_MAX_HP))
+        player->hp = PLAYER_MAX_HP; 
+}
+void incr_stamina(Player* player, const float stamina) {
+    player->stamina += stamina;
+    if(XF_GREATER_THAN_YF(player->stamina, (float)PLAYER_MAX_STAMINA))
+        player->stamina = PLAYER_MAX_STAMINA; 
+}
+void decr_min_0(float* lval, const float rval) {
+    *lval -= rval;
+    if(XF_LESS_THAN_YF(*lval, 0.0))
+        *lval = 0; 
+}
+/* BOUNDARY VALUE(MAX, MIN) SETTER END */
 
 /* ANIMATION START */
 void set_animation_p(Entity* entity, PlayerSpritesheetEnums start_state, void(*anim_proc)(Entity*, const float)) {
@@ -233,7 +260,7 @@ void player_anim_stun(Entity* entity, const float delta) {
 void player_dash(Entity* entity, const float delta) {
     Player* instance = entity->instance;
     if(!(instance->anim_metadata[0]))
-        switch((instance->state/10) == 4) {
+        switch((instance->state/10)) {
             case 4: { // startup of either front or back dash
                 WAIT(instance->accum_anim, PLAYER_DASH_STARTUP_DELAY);
                 instance->state += 30;
@@ -252,7 +279,7 @@ void player_dash(Entity* entity, const float delta) {
                 WAIT(instance->accum_anim, PLAYER_DASH_STARTUP_DELAY);
                 if((instance->state%10)%2) { // Right Dash
                     set_extent(entity, 24, 8, 8, 8);
-                    instance->state += 40;
+                    instance->state += 39;
                 } else { // Left Dash
                     set_extent(entity, 8, 8, 24, 8);
                     instance->state += 10;
@@ -327,44 +354,172 @@ void player_plant(Entity* entity, const float delta) {
     }
 }
 
+PlayerSpritesheetEnums get_player_dash_state(Player* instance) {
+    decr_min_0(&(instance->stamina), 50.0);
+    instance->is_update_status_gui = TRUE;
+    const unsigned short new_state = (instance->move_controller[1]? 
+        (40 + ((instance->move_controller[1] & 0b10)>>1)) : (50 + ((instance->move_controller[0]+2)>>1)));
+    switch(instance->state) {
+        PLAYER_ACTIVE_FRONT_CASES:
+            return new_state;
+        PLAYER_ACTIVE_BACK_CASES:
+            return new_state + 2;
+        break;
+        PLAYER_ACTIVE_RIGHT_CASES:
+            return new_state + 4;
+        break;
+        PLAYER_ACTIVE_LEFT_CASES:
+            return new_state + 6;
+        default:
+    }
+    return -1;
+}
 /* ANIMATION END */
+
+/* TERMINAL GUI START */ 
+void update_status_gui(Player* player) {
+    if(!(player->is_update_status_gui))
+        return;
+    char bar[34];
+    bar[33] = 0;
+    
+    ResetUI(TRUE);
+    WriteOnUi(" HP ");
+    const int h = EQUAL_TO_F(player->hp, 0.0)? 0 : (player->hp/HP_BLOCK + ((((int)player->hp)%HP_BLOCK)? 0: 1));
+    int hidx = 0;
+    for(; hidx < h; ++hidx)
+        memcpy(bar+(hidx*3), "\u2588", sizeof("\u2588"));
+    for(; hidx < ((PLAYER_MAX_HP/HP_BLOCK)+1); ++hidx)
+        memcpy(bar+(hidx*3), "\u2591", sizeof("\u2591"));
+    WriteOnUi(bar);
+
+    WriteOnUi(" Stamina ");
+    const int s = EQUAL_TO_F(player->stamina, 0.0)? 0 : (player->stamina/STAMINA_BLOCK + ((((int)player->stamina)%STAMINA_BLOCK)? 0: 1));
+    int sidx = 0;
+    for(; sidx < s; ++sidx)
+        memcpy(bar+(sidx*3), "\u2588", sizeof("\u2588"));
+    for(; sidx < ((PLAYER_MAX_STAMINA/STAMINA_BLOCK)+1); ++sidx)
+        memcpy(bar+(sidx*3), "\u2591", sizeof("\u2591"));
+    WriteOnUi(bar);
+
+    
+    if(!(player->is_menu_open))
+        WriteOnUi("\n\n");
+    else {
+        WriteOnUi("\n");
+        SetUiChOnCurr('\n');
+    }
+    player->is_update_status_gui = FALSE;
+}
+
+void write_horizontal_border_on_ui(const char* start, const char* middle, const char* end) {
+    WriteOnUi(start);
+    WriteOnUi("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+    WriteOnUi(middle);
+    WriteOnUi("\u2550\u2550\u2550\u2550\u2550\u2550");
+    WriteOnUi(end);
+    WriteOnUi("\n");
+}
+
+void update_menu_gui(Player* player) {
+    if(!player->is_menu_open || !player->is_update_menu)
+        return;
+    SetUIPosPtr(81); // fixed position after status menu
+    WriteOnUi("       ---  INVENTORY  ---      \n");
+    write_horizontal_border_on_ui(" \u2554", "\u2566", "\u2557");
+    FOR_LIST(Item,, player->inventory, {
+        char item_name[23]; 
+        TextPadRight(get_item_name(itr->val.type), 22, item_name); 
+        WriteOnUi(" \u2551 "); 
+        WriteOnUi(item_name);
+        WriteOnUi("\u2551");
+        if(itr->val.count != -1) { 
+            char item_count[7]; 
+            char count[6]; 
+            sprintf(count, "%d", itr->val.count); 
+            TextPadCenter(count, 6, item_count); 
+            WriteOnUi(item_count);
+        } else 
+            WriteOnUi("KeyItm"); 
+        WriteOnUi("\u2551\n");
+    })
+    write_horizontal_border_on_ui(" \u2560", "\u256C", "\u2563");
+    write_horizontal_border_on_ui(" \u255A", "\u2569", "\u255D");
+    WriteOnUi("\n");
+    player->is_update_menu = FALSE;
+}
+
+void toggle_menu(Player* player) {
+    player->is_menu_open = player->is_menu_open == 0;
+    if(player->is_menu_open) {
+        player->is_update_menu = TRUE;
+    } else {
+        SetUIPosPtr(81);
+        SetUiChOnCurr('\0');
+    }
+}
+/* TERMINAL GUI END */
 
 /* MOVE AND COLLIDE START */
 void move_and_collide(Entity* entity, const float delta) {
     Player* instance = entity->instance;
     remove_collision_on(entity->map, COLLISION_LAYER, entity->position);
     Point2f next_pos;
-    if(!check_collision_with_vec(entity->map, COLLISION_LAYER, entity->position, instance->move_controller)) {
+    Point2S8 vector = {0, 0};
     switch (instance->state) {
         PLAYER_FRONT_WALK_CASES: {
-            entity->position[1] += WALKING_SPEED;
+            next_pos[0] = entity->position[0];
+            next_pos[1] = entity->position[1] + (WALKING_SPEED * delta);
+            vector[0] = instance->move_controller[0];
+            vector[1] = instance->move_controller[1];
         } break;
         PLAYER_BACK_WALK_CASES: {
-            entity->position[1] -= WALKING_SPEED;
+            next_pos[0] = entity->position[0];
+            next_pos[1] = entity->position[1] - (WALKING_SPEED * delta);
+            vector[0] = instance->move_controller[0];
+            vector[1] = instance->move_controller[1];
         } break;
         PLAYER_LEFT_WALK_CASES: {
-            entity->position[0] -= WALKING_SPEED;
+            next_pos[0] = entity->position[0] - WALKING_SPEED * delta;
+            next_pos[1] = entity->position[1];
+            vector[0] = instance->move_controller[0];
+            vector[1] = instance->move_controller[1];
         } break;
         PLAYER_RIGHT_WALK_CASES: {
-            entity->position[0] += WALKING_SPEED;
+            next_pos[0] = entity->position[0] + WALKING_SPEED * delta;
+            next_pos[1] = entity->position[1];
+            vector[0] = instance->move_controller[0];
+            vector[1] = instance->move_controller[1];
         } break;
-        case PLAYER_FRONTDASH_CASES: {
-
+        PLAYER_FRONTDASH_CASES: {
+            next_pos[0] = entity->position[0];
+            next_pos[1] = entity->position[1] + (WALKING_SPEED * delta);
+            vector[1] = 1;
         } break;
-        case PLAYER_BACKDASH_CASES: {
-             
+        PLAYER_BACKDASH_CASES: {
+            next_pos[0] = entity->position[0];
+            next_pos[1] = entity->position[1] - (WALKING_SPEED * delta);
+            vector[1] = -1;
         } break;
-        case PLAYER_RIGHTDASH_CASES: {
-
+        PLAYER_RIGHTDASH_CASES: {
+            next_pos[0] = entity->position[0] + WALKING_SPEED * delta;
+            next_pos[1] = entity->position[1];
+            vector[0] = 1;
         } break;
-        case PLAYER_LEFTDASH_CASES: {
-
+        PLAYER_LEFTDASH_CASES: {
+            next_pos[0] = entity->position[0] - WALKING_SPEED * delta;
+            next_pos[1] = entity->position[1];
+            vector[0] = -1;
         } break;
         default:
+            add_collision_on(entity->map, COLLISION_LAYER, entity->position);
+        return;
     }
-    entity->redraw = TRUE;
-    }
+    check_collision_with_vec(entity->map, COLLISION_LAYER, next_pos, vector);
+    entity->position[0] = next_pos[0];
+    entity->position[1] = next_pos[1];
     add_collision_on(entity->map, COLLISION_LAYER, entity->position);
+    entity->redraw = TRUE;
 }
 /* MOVE AND COLLIDE END */
 
@@ -409,77 +564,68 @@ BOOL move_input(Player* instance) {
     return FALSE;
 }
 
+void pick_up_item(Entity* entity) {
+    Point2f position = {entity->position[0], entity->position[1]};
+    switch(((Player*)entity->instance)->state) {
+        PLAYER_ACTIVE_FRONT_CASES:
+            position[1] += PLAYER_PARTITION_X>>1; break;
+        PLAYER_ACTIVE_BACK_CASES:
+            position[1] -= BIGGER_EPSILON+(PLAYER_PARTITION_X>>1); break;
+        PLAYER_ACTIVE_LEFT_CASES:
+            position[0] -= BIGGER_EPSILON+(PLAYER_PARTITION_Y>>1); break;
+        PLAYER_ACTIVE_RIGHT_CASES:
+            position[0] += PLAYER_PARTITION_Y>>1; break;
+        default:
+    }
+    add_collision_on(entity->map, INTERACTION_LAYER, position);
+    memcpy(((Player*)entity->instance)->last_interaction, position, sizeof(Point2f));
+}
+
 void InputPlayer(Entity* entity) {
     Player* instance = (Player*)entity->instance;
+    
+    if(GetStateOfKey(SDL_SCANCODE_SEMICOLON) == PRESSED) // Open/Close Menu
+        toggle_menu(instance);
+
     switch(instance->state) {
         PLAYER_ALL_ACTIVE_CASES:
             break;
         default:
+            instance->move_controller[0] = 0;
+            instance->move_controller[1] = 0;
             return;
     }
-    
-    if(instance->hasSword && GetStateOfKey(SDL_SCANCODE_SPACE) == PRESSED) {
-        memset(instance->move_controller, 0, sizeof(instance->move_controller));
-        switch (instance->state){
-            PLAYER_ACTIVE_FRONT_CASES:
-                set_animation_p(entity, PBLADEUPPERLEFT, player_anim_attack_front); break;
-            PLAYER_ACTIVE_BACK_CASES:
-                set_animation_p(entity, PBLADEBACKRIGHT, player_anim_attack_back); break;
-            PLAYER_ACTIVE_LEFT_CASES:
-                set_animation_p(entity, PBLADEBACKRIGHT, player_anim_attack_left); break;
-            PLAYER_ACTIVE_RIGHT_CASES:
-                set_animation_p(entity, PBLADELOWERLEFT, player_anim_attack_right); break;
-            default:
-        }
-        return;
-    }
 
-    if(instance->last_interaction[0] == -1 && GetStateOfKey(SDL_SCANCODE_F) == PRESSED) {
-        Point2f position = {entity->position[0], entity->position[1]};
-        switch(instance->state) {
-            PLAYER_ACTIVE_FRONT_CASES:
-                position[1] += PLAYER_PARTITION_X>>1; break;
-            PLAYER_ACTIVE_BACK_CASES:
-                position[1] -= EPSILON+(PLAYER_PARTITION_X>>1); break;
-            PLAYER_ACTIVE_LEFT_CASES:
-                position[0] -= EPSILON+(PLAYER_PARTITION_Y>>1); break;
-            PLAYER_ACTIVE_RIGHT_CASES:
-                position[0] += PLAYER_PARTITION_Y>>1; break;
-            default:
-        }
-        add_collision_on(entity->map, INTERACTION_LAYER, position);
-        memcpy(instance->last_interaction, position, sizeof(Point2f));
-    }
+    // check if a key item has a binded input key
+    FOR_LIST(Item,, instance->inventory, {
+        if(itr->val.count != -1) // if item is no longer key item, then end loop
+            break;
+        on_input(&(itr->val), entity);
+    });
+
+    // if Picking up item
+    if(instance->last_interaction[0] == -1 && GetStateOfKey(SDL_SCANCODE_F) == PRESSED)
+        pick_up_item(entity);
 
     const BOOL isDash = isHeld(GetStateOfKey(SDL_SCANCODE_LSHIFT));
-    if(!move_input(instance) && !isDash) // return when move_input is not changed
+    if(!(move_input(instance) || isDash)) // return when move_input is not changed
         return;
+    
     if(instance->move_controller[0] == 0 && instance->move_controller[1] == 0) {
-        set_animation_p(entity, 
-            instance->state%PLAYER_MAX_COLUMN,
-            player_anim_idle
-        );
+        // Reset to idle
+        if(!isDash)
+            set_animation_p(entity, instance->state%PLAYER_MAX_COLUMN, player_anim_idle);
         return;
     }
+
     if(isDash) {
-        unsigned short new_state = (instance->move_controller[0]? 
-            (40 + ((instance->move_controller[1] & 0b10)>>1)) : (50 + ((instance->move_controller[0]+2)>>1)));
-        switch(instance->state) {
-            case PLAYER_ACTIVE_FRONT_CASES:
-                break;
-            case PLAYER_ACTIVE_BACK_CASES:
-                new_state += 2;
-            break;
-            case PLAYER_ACTIVE_RIGHT_CASES:
-                new_state += 4;
-            break;
-            case PLAYER_ACTIVE_LEFT_CASES:
-                new_state += 6;
-            default:
-        }
-        set_animation_p(entity, new_state, player_dash);
+        // Dash animation
+        if(XF_GREATER_THAN_OR_EQUAL_YF(instance->stamina, 50.0))
+            set_animation_p(entity, get_player_dash_state(instance), player_dash);
         return;
     }
+
+    // Walking animation
     set_animation_p(entity,
         instance->move_controller[0] != 0? (
             instance->move_controller[0] == -1? PLEFTWALK0 : PRIGHTWALK0
@@ -504,10 +650,13 @@ Entity* ReadyPlayer(const float position_x, const float position_y, Map* created
 
     Player* instance = calloc(1, sizeof(Player));
     entity->instance = instance;
-    instance->prev_map = VOID_MAP;
+    entity->prev_map = VOID_MAP;
     instance->hp = PLAYER_MAX_HP;
+    instance->stamina = PLAYER_MAX_STAMINA;
     instance->last_interaction[0] = -1;
+    init_linked_listItem(&(instance->inventory));
     set_animation_p(entity, PFRONTIDLE0, player_anim_idle);
+    instance->is_update_status_gui = TRUE;
 
     return entity;
 }
@@ -515,38 +664,45 @@ Entity* ReadyPlayer(const float position_x, const float position_y, Map* created
 void ExitPlayer(Entity* entity) {
     FreeTextureResource(PLAYER_SPRITESHEET);
     remove_collision_on(entity->map, COLLISION_LAYER, entity->position);
+    free_linked_listItem(&((Player*)entity->instance)->inventory);
 }
 
 void ProcessPlayer(Entity* entity, const float delta) {
     Player* instance = ((Player*)entity->instance);
-
+    
     if(instance->state == PDEATH)
         return;
 
+    // Check for Warp
     int warp = -1+get_collision_on(entity->map, WARP_EVENT_LAYER, entity->position);
     if(warp > VOID_MAP) {
-        entity->map->switch_map = (CollisionType)(warp);
-        instance->prev_map = entity->map->type;
+        entity->map->switch_map = (MapInstance)(warp);
+        entity->prev_map = entity->map->type;
         return;
     }
     
+    // Remove Interaction after a frame if interaction exist
     if(instance->last_interaction[0] != -1) {
         remove_collision_on(entity->map, INTERACTION_LAYER, instance->last_interaction);
         instance->last_interaction[0] = -1;
     }
     
-    unsigned short damage = get_collision_on(entity->map, HITBOX_LAYER, entity->position);
+    // Check if taking damage
+    unsigned short damage = get_collision_on(entity->map, HURTBOX_LAYER, entity->position);
     if(damage) {
-        null_collision_on(entity->map, HITBOX_LAYER, entity->position[0], entity->position[1]);
+        null_collision_on(entity->map, HURTBOX_LAYER, entity->position[0], entity->position[1]);
         instance->anim_proc(entity, PLAYER_ATTACK_ANIM1_DELAY + PLAYER_ATTACK_ANIM2_DELAY); // removes hitbox on collision layer if attacking
+        decr_min_0(&(instance->hp), damage);
+        instance->is_update_status_gui = TRUE;
+        
         if(instance->hp <= damage) {
             instance->state = PDEATH;
             entity->redraw = TRUE;
             printf("You have Died...\n");
+            update_status_gui(instance);
             return;
         }
-        instance->hp -= damage;
-
+        
         switch(instance->state) {
             PLAYER_FRONT_CASES:
                 set_animation_p(entity, PSTUNFRONT, player_anim_stun); break;
@@ -566,9 +722,23 @@ void ProcessPlayer(Entity* entity, const float delta) {
                 else
                     set_animation_p(entity, PSTUNFRONT, player_anim_stun);
         }
+        update_status_gui(instance);
         return;
     }
+
+    // Recover Stamina Bar
+    switch(instance->state) {
+        PLAYER_ALL_ACTIVE_CASES:
+        if(instance->stamina != PLAYER_MAX_STAMINA) {
+            incr_stamina(instance, delta * STAMINA_RECOVERY_RATE);
+            instance->is_update_status_gui = TRUE;
+        } break;
+        default:
+    }
     
+    update_status_gui(instance);
+    update_menu_gui(instance);
+
     instance->accum_anim += delta;
     instance->anim_proc(entity, delta);
     move_and_collide(entity, delta);
@@ -578,3 +748,32 @@ void GetPlayerSrcRectPos(Entity* entity, SDL_Rect* rect) {
     rect->x = (((Player*)entity->instance)->state%PLAYER_MAX_COLUMN)*PLAYER_PARTITION_X;
     rect->y = (((Player*)entity->instance)->state/PLAYER_MAX_COLUMN)*PLAYER_PARTITION_Y;
 }
+
+/* EVENT SIGNALS START */
+void SignalSwordAttack(Entity* entity) {
+    Player* instance = entity->instance;
+    memset(instance->move_controller, 0, sizeof(instance->move_controller));
+    decr_min_0(&(instance->stamina), 15);
+    switch (instance->state){
+        PLAYER_ACTIVE_FRONT_CASES:
+            set_animation_p(entity, PBLADEUPPERLEFT, player_anim_attack_front); break;
+        PLAYER_ACTIVE_BACK_CASES:
+            set_animation_p(entity, PBLADEBACKRIGHT, player_anim_attack_back); break;
+        PLAYER_ACTIVE_LEFT_CASES:
+            set_animation_p(entity, PBLADEBACKRIGHT, player_anim_attack_left); break;
+        PLAYER_ACTIVE_RIGHT_CASES:
+            set_animation_p(entity, PBLADELOWERLEFT, player_anim_attack_right); break;
+        default:
+    }
+    instance->is_update_status_gui = TRUE;
+    return;
+}
+
+void SignalArrowAttack(Entity* entity) {
+
+}
+
+void SignalPlantBomb(Entity* entity) {
+
+}
+/* EVENT SIGNALS END */

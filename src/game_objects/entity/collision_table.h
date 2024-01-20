@@ -5,9 +5,10 @@ typedef enum {
     COLLISION_LAYER = 0b1,
     HITBOX_LAYER = 0b10,
     INTERACTION_LAYER = 0b100,
-    WARP_EVENT_LAYER = 0b1000
+    WARP_EVENT_LAYER = 0b1000,
+    HURTBOX_LAYER = 0b10000
 } CollisionType;
 
-#define MAX_COLLISION_LAYER 4
+#define MAX_COLLISION_LAYER 5
 
 #endif

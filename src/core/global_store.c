@@ -34,7 +34,8 @@ void AddEntityTag(struct Entity* entity, char* tag) {
         return;
     }
     global_store.shared_entity[global_store.tail].entity = entity;
-    global_store.shared_entity[global_store.tail].tag = tag;
+    global_store.shared_entity[global_store.tail].tag = malloc(strlen(tag));
+    strcpy(global_store.shared_entity[global_store.tail].tag, tag);
     global_store.tail++;
 }
 
@@ -44,6 +45,8 @@ void AddEntity(struct Entity* entity) {
 
 void RemoveEntity(EntityContainer* entity_container) {
     terminate(entity_container->entity);
+    if(entity_container->tag != NULL)
+        free(entity_container->tag);
     memset(entity_container, 0, sizeof(EntityContainer));
 }
 

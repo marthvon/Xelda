@@ -1,0 +1,29 @@
+M <id> - map type
+T <texture id...> - textures used
+D <x> <y> - Dimension
+B <x> <y> - Pixel Block
+E <capacity> - Entity capacity
+Z <capacity> <X Layer Entity capacity...> - Z index capacity
+P <capacity> - Process Capacity
+I <capacity> - Input capacity
+
+Insert one Entity
+i <zidx layer> <entity type as int> <position as block x> <position as block y> <texture spritesheet as int> <spritesheet pos as int>
+
+Insert entities in a horizontal line
+h <x1> <x2> <zidx layer> <entity type as int> <position as block x> <position as block y> <texture spritesheet as int> <spritesheet pos as int>
+
+Insert entities in a vertical line
+v <y1> <y2> <zidx layer> <entity type as int> <position as block x> <position as block y> <texture spritesheet as int> <spritesheet pos as int>
+
+insert entities in a square
+d <x1> <x2> <y1> <y2> <zidx layer> <entity type as int> <position as block x> <position as block y> <texture spritesheet as int> <spritesheet pos as int>
+
+also 
+i m or h m or v m or d m if using ready_m else use ready
+insert specify where
+d for display, p for process, e for entity, c for input
+
+g for global
+
+w for warp specify if h v i d for how to put it

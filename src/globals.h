@@ -21,8 +21,8 @@ typedef unsigned short Rect2U16[4];
 typedef Byte Rect2U8[4];
 typedef float Rect2f[4]; 
 
-//#define EPSILON 0.000001
-#define EPSILON 0.001
+#define EPSILON 0.000001
+#define BIGGER_EPSILON 0.001
 #define XF_GREATER_THAN_YF(x, y) ((x) > ((y)+EPSILON))
 #define XF_LESS_THAN_YF(x, y) ((x) < ((y)-EPSILON))
 #define EQUAL_TO_F(x, y) ((((x)-EPSILON) < (y)) && (((x)+EPSILON) > (y)))

@@ -2,6 +2,7 @@
 
 #include "../../core/visual_server.h"
 #include "../../core/global_store.h"
+#include "../../core/logger.h"
 #include "collision_table.h"
 #include "player.h"
 #include "../maps/events_table.h"
@@ -26,6 +27,8 @@ Entity* ReadyStatue(const float position_x, const float position_y, Map* created
     Statue* instance = calloc(1, sizeof(Statue));
     entity->instance = instance;
     instance->hasSword = !(IsEventTriggered(SWORD_TAKEN_TRIGGERED));
+
+    push_ett(&(created_by->process_priority), entity);
     return entity;
 }
 
@@ -44,11 +47,14 @@ void ProcessStatue(Entity* entity, const float delta) {
         return;
     Entity* player = player_container->entity;
     ToggleEventTriggered(SWORD_TAKEN_TRIGGERED);
-    ((Player*)player->instance)->hasSword = TRUE;
-    ((Statue*)entity->instance)->hasSword = FALSE;
-    entity->redraw = TRUE;
 
-    printf("[LOG]: Obtained Sword!!!\n");
+    ItemNode item = {SwordItem, -1};
+    push_frontItem(&((Player*)player->instance)->inventory, item);
+    ((Statue*)entity->instance)->hasSword = FALSE;
+
+    entity->redraw = TRUE;
+    ((Player*)player->instance)->is_update_menu = TRUE;
+    WriteOnLog("[Pick Up]: Obtained Sword!!!\n");
 }
 
 void GetStatueSrcRectPos(Entity* entity, SDL_Rect* rect) {
