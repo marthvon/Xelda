@@ -8,6 +8,7 @@ In the bin folder, run <br>
 
 ##### If program fails to open then run bash script install.sh in bin.
 > sh install.sh
+
 It may not successfully install all the required packages for non Ubuntu OS version 22.00<br>
 Relies on the latest version of Ubuntu jammy for the sudo package manager to install **libdecor**
 
